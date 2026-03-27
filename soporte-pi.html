@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte Pi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #101212; min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: rgb(16,18,18); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #101212 0%, #1e2020 100%); color: rgb(246,241,38); padding: 30px; display: flex; align-items: center; gap: 30px; }
+        .header-logo { flex-shrink: 0; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+        .header-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .header-content { flex: 1; text-align: center; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .progress-section { padding: 20px 30px; background: #FFF100; }
+        .progress-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #101212; }
+        .progress-bar { width: 100%; height: 8px; background: #bdbdbd; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #101212 0%, #757575 100%); width: 0%; transition: width 0.3s ease; }
+        .content { padding: 30px; }
+        .fase { margin-bottom: 30px; border: 2px solid #101212; border-radius: 8px; overflow: hidden; }
+        .fase-header { background: #FF7A00; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .fase-header h2 { font-size: 18px; color: #101212; display: flex; align-items: center; gap: 10px; }
+        .fase-number { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #e4e4e4; color: black; border-radius: 50%; font-weight: bold; font-size: 14px; }
+        .fase-progress { font-size: 12px; color: #101212; background: #ececec; padding: 4px 12px; border-radius: 20px; }
+        .fase-items { padding: 20px; background: rgb(16,18,18); }
+        .checkbox-item { display: flex; align-items: center; padding: 12px; margin-bottom: 10px; background: #93D3EF; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+        .checkbox-item:last-child { margin-bottom: 0; }
+        .checkbox-item:hover { background: #FD415A; transform: translateX(5px); }
+        .checkbox-item.completed { background: #FFF100; }
+        .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; margin-right: 15px; accent-color: #667eea; flex-shrink: 0; }
+        .checkbox-item label { flex: 1; cursor: pointer; color: #333; font-size: 14px; }
+        .checkbox-item.completed label { text-decoration: line-through; color: #101212; }
+        .buttons-section { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #101212; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.3s ease; }
+        .btn-reset { background: #FD415A; color: white; flex: 1; }
+        .btn-reset:hover { background: #d32f2f; }
+        .btn-export { background: #1F57E5; color: white; flex: 1; }
+        .btn-export:hover { background: #1976D2; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; padding: 20px; background: #FFF100; border-radius: 8px; }
+        .stat { text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #101212; }
+        .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .footer { text-align: center; padding: 15px; background: #101212; color: #FFF100; font-size: 12px; }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 6mm;
+            }
+
+            html {
+                /* Escala todo el contenido para que entre en una sola página */
+                zoom: 62%;
+            }
+
+            html, body {
+                background: #101212 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                height: auto !important;
+            }
+
+            body { padding: 0 !important; margin: 0 !important; }
+
+            .container {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Eliminar saltos de página entre fases */
+            .fase {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 15px !important;
+            }
+
+            /* Ocultar elementos que no van al PDF */
+            .buttons-section { display: none !important; }
+            .footer { display: none !important; }
+
+            /* Preservar colores exactos */
+            .header { background: #101212 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .progress-section { background: #FFF100 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .stats { background: #FFF100 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .fase-header { background: #FF7A00 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .fase-items { background: rgb(16,18,18) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .checkbox-item { background: #93D3EF !important; transform: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .checkbox-item.completed { background: #FFF100 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-logo"><img src="logo.png" alt="Logo"></div>
+            <div class="header-content">
+                <h1>📋 Entregables de Proyectos</h1>
+                <p>Seguimiento de fases</p>
+            </div>
+        </div>
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Progreso General</span>
+                <span id="percentage">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="stats">
+                <div class="stat"><div class="stat-number" id="totalTasks">0</div><div class="stat-label">Total de Tareas</div></div>
+                <div class="stat"><div class="stat-number" id="completedTasks">0</div><div class="stat-label">Completadas</div></div>
+                <div class="stat"><div class="stat-number" id="remainingTasks">0</div><div class="stat-label">Pendientes</div></div>
+            </div>
+            <div id="fasesContainer"></div>
+            <div class="buttons-section">
+                <button class="btn-reset" onclick="resetiarTodo()">🔄 Reiniciar Todo</button>
+                <button class="btn-export" onclick="exportarProgreso()">📥 Exportar Progreso</button>
+            </div>
+        </div>
+        <div class="footer"><p>💾 Los cambios se guardan automáticamente en tu navegador</p></div>
+    </div>
+
+    <script>
+        const fases = [
+            { nombre: "Fase 1: Planificación", tareas: ["Planificar junto a BD propuesta de soporte","Definir hs y alcance del servicio"] },
+            { nombre: "Fase 2: Traspaso y Documentación", tareas: ["Generar reunion con PM y equipo","Realizar traspaso de información","Solicitar documentacion del proyecto"] },
+            { nombre: "Fase 3: Asignacion de equipo", tareas: ["Capacitacion del equipo","Entregar documentacion de proyecto"] },
+            { nombre: "Fase 4: Fase final", tareas: ["Dar de alta cliente en Portal","Reporte mensuales de seguimiento","Detectar oportunidades de mejora"] }
+        ];
+
+        let estado = {};
+
+        function inicializar() {
+            cargarEstado();
+            renderizarFases();
+            actualizarEstadisticas();
+        }
+
+        function renderizarFases() {
+            const container = document.getElementById('fasesContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            fases.forEach((fase, indexFase) => {
+                const faseId = `fase-${indexFase}`;
+                const faseDiv = document.createElement('div');
+                faseDiv.className = 'fase';
+                const tareas = estado[faseId] || {};
+                const completadas = Object.values(tareas).filter(v => v).length;
+                const total = fase.tareas.length;
+                const header = document.createElement('div');
+                header.className = 'fase-header';
+                header.innerHTML = `<h2><span class="fase-number">${indexFase + 1}</span><span>${fase.nombre}</span></h2><span class="fase-progress">${completadas}/${total}</span>`;
+                const items = document.createElement('div');
+                items.className = 'fase-items';
+                fase.tareas.forEach((tarea, indexTarea) => {
+                    const tareaId = `${faseId}-tarea-${indexTarea}`;
+                    const completada = estado[faseId]?.[tareaId] || false;
+                    const lbl = document.createElement('label');
+                    lbl.className = `checkbox-item ${completada ? 'completed' : ''}`;
+                    lbl.innerHTML = `<input type="checkbox" ${completada ? 'checked' : ''} onchange="cambiarEstado('${faseId}', '${tareaId}')"><label>${tarea}</label>`;
+                    items.appendChild(lbl);
+                });
+                faseDiv.appendChild(header);
+                faseDiv.appendChild(items);
+                container.appendChild(faseDiv);
+            });
+        }
+
+        function cambiarEstado(faseId, tareaId) {
+            if (!estado[faseId]) estado[faseId] = {};
+            estado[faseId][tareaId] = !estado[faseId][tareaId];
+            guardarEstado(); renderizarFases(); actualizarEstadisticas();
+        }
+
+        function actualizarEstadisticas() {
+            let completadas = 0;
+            Object.values(estado).forEach(fase => { completadas += Object.values(fase).filter(v => v).length; });
+            const totalReal = fases.reduce((sum, f) => sum + f.tareas.length, 0);
+            document.getElementById('totalTasks').textContent = totalReal;
+            document.getElementById('completedTasks').textContent = completadas;
+            document.getElementById('remainingTasks').textContent = totalReal - completadas;
+            const porcentaje = totalReal === 0 ? 0 : Math.round((completadas / totalReal) * 100);
+            document.getElementById('percentage').textContent = porcentaje + '%';
+            document.getElementById('progressFill').style.width = porcentaje + '%';
+        }
+
+        function guardarEstado() { try { localStorage.setItem('checklistEstado', JSON.stringify(estado)); } catch(e) {} }
+        function cargarEstado() { try { const g = localStorage.getItem('checklistEstado'); if (g) estado = JSON.parse(g); } catch(e) {} }
+
+        function resetiarTodo() {
+            if (confirm('¿Estás seguro de que deseas reiniciar todas las tareas?')) {
+                estado = {}; guardarEstado(); renderizarFases(); actualizarEstadisticas();
+            }
+        }
+
+        function exportarProgreso() {
+            setTimeout(() => { window.print(); }, 100);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', inicializar);
+        } else {
+            inicializar();
+        }
+    </script>
+</body>
+</html>
